@@ -1,0 +1,220 @@
+<dashboard version="1.1" theme="dark">
+  <label>pfSense and Suricata Dashboard</label>
+  <description>Real-time network security monitoring dashboard</description>
+  <row>
+    <panel span="6" backgroundImage="gradient">
+      <title>Network Traffic Rate (Bps)</title>
+      <chart>
+        <search>
+          <query>
+            <![CDATA[
+index=network sourcetype="pfsense:filterlog" 
+| eval bytes=coalesce(bytes_in, bytes_out, 0)
+| timechart span=10s sum(bytes) as "Traffic Volume"
+| fillnull value=0
+            ]]>
+          </query>
+          <earliest>rt-5m</earliest>
+          <latest>rt</latest>
+        </search>
+        <option name="charting.axisTitleX.text">Time</option>
+        <option name="charting.axisTitleY.text">Bytes/sec</option>
+        <option name="charting.chart">area</option>
+        <option name="charting.chart.showDataLabels">minmax</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.legend.placement">bottom</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel span="6" backgroundImage="gradient">
+      <title>Connection Rate (Connections/sec)</title>
+      <chart>
+        <search>
+          <query>
+            <![CDATA[
+index=network sourcetype="pfsense:filterlog" 
+| timechart span=10s count as "Connections" 
+| fillnull value=0
+            ]]>
+          </query>
+          <earliest>rt-5m</earliest>
+          <latest>rt</latest>
+        </search>
+        <option name="charting.chart">area</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.chart.rangeColors">["#ff7f0e","#ffab4e","#ffc78e","#ffe4ce"]</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel span="6" backgroundImage="gradient">
+      <title>Real-time Suricata Alerts</title>
+      <chart>
+        <search>
+          <query>
+            <![CDATA[
+index=ids sourcetype=suricata alert.severity=* 
+| timechart span=10s count by alert.severity useother=false
+| fillnull value=0
+            ]]>
+          </query>
+          <earliest>rt-5m</earliest>
+          <latest>rt</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.chart.style">minimal</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.chart.showDataLabels">minmax</option>
+        <option name="charting.lineWidth">2</option>
+        <option name="charting.chart.rangeColors">["#2ecc71","#e74c3c"]</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel span="6" backgroundImage="gradient">
+      <title>Real-time Firewall Actions</title>
+      <chart>
+        <search>
+          <query>
+            <![CDATA[
+index=network sourcetype="pfsense:filterlog" 
+| timechart span=10s count by action useother=false
+| fillnull value=0
+            ]]>
+          </query>
+          <earliest>rt-5m</earliest>
+          <latest>rt</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.chart.style">minimal</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.chart.showDataLabels">minmax</option>
+        <option name="charting.lineWidth">2</option>
+        <option name="charting.chart.rangeColors">["#3498db","#9b59b6"]</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel span="4">
+      <title>Top Source IPv4 Addresses</title>
+      <chart>
+        <search>
+          <query>
+            <![CDATA[
+index=network sourcetype="pfsense:filterlog" 
+| where match(src_ip, "^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$")
+| stats count by src_ip 
+| sort -count 
+| head 7
+            ]]>
+          </query>
+          <earliest>rt-5m</earliest>
+          <latest>rt</latest>
+        </search>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.chart">bar</option>
+        <option name="charting.chart.showDataLabels">none</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">none</option>
+      </chart>
+    </panel>
+    <panel span="4">
+      <title>Top Destination IPv4 Addresses</title>
+      <chart>
+        <search>
+          <query>
+            <![CDATA[
+index=network sourcetype="pfsense:filterlog" 
+| where match(dest_ip, "^\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}$")
+| stats count by dest_ip 
+| sort -count 
+| head 7
+            ]]>
+          </query>
+          <earliest>rt-5m</earliest>
+          <latest>rt</latest>
+        </search>
+        <option name="charting.chart">bar</option>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="charting.drilldown">none</option>
+      </chart>
+    </panel>
+    <panel span="4">
+      <title>Top Destination Ports</title>
+      <chart>
+        <search>
+          <query>
+            <![CDATA[
+index=network sourcetype="pfsense:filterlog" 
+| stats count by dest_port 
+| sort -count 
+| head 7
+            ]]>
+          </query>
+          <earliest>rt-5m</earliest>
+          <latest>rt</latest>
+        </search>
+        <option name="charting.axisY.scale">linear</option>
+        <option name="charting.chart">pie</option>
+        <option name="charting.drilldown">none</option>
+        <option name="charting.legend.placement">none</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel span="6" backgroundImage="gradient">
+      <title>Network Throughput (Mbps)</title>
+      <chart>
+        <search>
+          <query>
+            <![CDATA[
+index="network" sourcetype="pfsense:filterlog" 
+| eval bytes=coalesce(bytes_in, 0) + coalesce(bytes_out, 0) 
+| timechart span=10s sum(bytes) as total_bytes 
+| eval throughput_mbps=(total_bytes*8)/1000000 
+| fields _time, throughput_mbps 
+| rename throughput_mbps as "Throughput (Mbps)"
+            ]]>
+          </query>
+          <earliest>rt-5m</earliest>
+          <latest>rt</latest>
+        </search>
+        <option name="charting.axisTitleX.text">Time</option>
+        <option name="charting.axisTitleY.text">Mbps</option>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.showDataLabels">minmax</option>
+        <option name="charting.chart.stackMode">default</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.drilldown">all</option>
+        <option name="charting.layout.splitSeries">0</option>
+        <option name="charting.legend.placement">bottom</option>
+      </chart>
+    </panel>
+    <panel>
+      <title>Peak Throughput (4 Hours)</title>
+      <single>
+        <search>
+          <query>
+            <![CDATA[
+index="network" sourcetype="pfsense:filterlog"
+| eval bytes=coalesce(bytes, 0)
+| timechart span=5m sum(bytes) as total_bytes
+| eval "Throughput (Bps)"=round(total_bytes/300, 2)
+| stats max("Throughput (Bps)") as peak_throughput
+| eval peak_throughput=round(peak_throughput, 2)
+            ]]>
+          </query>
+          <earliest>-4h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="unit">Bps</option>
+      </single>
+    </panel>
+  </row>
+</dashboard>

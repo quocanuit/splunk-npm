@@ -1,0 +1,366 @@
+<dashboard version="1.1" theme="dark">
+  <label>Active Directory Monitoring</label>
+  <description>Domain Controller and Client Workstations Performance Analysis</description>
+  <row>
+    <panel>
+      <title>Domain Controller Monitoring</title>
+      <html>
+                <h3 style="text-align: center; padding: 10px; background-color: #1e1e1e; border-radius: 5px;">Domain Controller Metrics</h3>
+            </html>
+    </panel>
+  </row>
+  <row>
+    <panel span="6" backgroundImage="gradient">
+      <single>
+        <search>
+          <query>
+              <![CDATA[
+  index=endpoint host="ADDC" collection=CPU counter="% Processor Time" 
+  | timechart span=10s avg(Value) as "CPU Usage %" 
+  | fillnull value=0 
+  | eval alert=if('CPU Usage %' > 20, "Warning: High CPU Usage", "Normal") 
+  | stats latest(alert) as current_alert by _time 
+  | sort -_time
+  
+                      ]]>
+            </query>
+          <earliest>rt-5m</earliest>
+          <latest>rt</latest>
+        </search>
+        <option name="colorMode">none</option>
+        <option name="drilldown">all</option>
+        <option name="rangeColors">["0x53a051","0x0877a6","0xf8be34","0xf1813f","0xdc4e41"]</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel span="6" backgroundImage="gradient">
+      <title>DC CPU Usage (%)</title>
+      <chart>
+        <search>
+          <query>
+            <![CDATA[
+index=endpoint host="ADDC" collection=CPU counter="% Processor Time" 
+| timechart span=10s avg(Value) as "CPU Usage %" 
+| fillnull value=0
+                    ]]>
+          </query>
+          <earliest>rt-5m</earliest>
+          <latest>rt</latest>
+        </search>
+        <option name="charting.chart">area</option>
+        <option name="charting.drilldown">all</option>
+      </chart>
+    </panel>
+    <panel span="6" backgroundImage="gradient">
+      <title>DC Memory - Page Faults/sec</title>
+      <chart>
+        <search>
+          <query>
+            <![CDATA[
+index=endpoint host="ADDC" collection=Memory counter="Page Faults/sec" 
+| timechart span=10s avg(Value) 
+| fillnull value=0
+                    ]]>
+          </query>
+          <earliest>rt-5m</earliest>
+          <latest>rt</latest>
+        </search>
+        <option name="charting.chart">area</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.chart.rangeColors">["#ff7f0e","#ffab4e","#ffc78e","#ffe4ce"]</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel span="6" backgroundImage="gradient">
+      <title>DC Disk Read/Write</title>
+      <chart>
+        <search>
+          <query>
+            <![CDATA[
+index=endpoint host="ADDC" collection=LogicalDisk (counter="Disk Read Bytes/sec" OR counter="Disk Write Bytes/sec") 
+| timechart span=10s avg(Value) by counter 
+| fillnull value=0
+                    ]]>
+          </query>
+          <earliest>rt-5m</earliest>
+          <latest>rt</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.chart.style">minimal</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.lineWidth">2</option>
+        <option name="charting.chart.rangeColors">["#2ecc71","#e74c3c"]</option>
+      </chart>
+    </panel>
+    <panel span="6" backgroundImage="gradient">
+      <title>DC Network Traffic - Bytes/sec</title>
+      <chart>
+        <search>
+          <query>
+            <![CDATA[
+index=endpoint host="ADDC" collection="Network Interface" instance="Intel[R] 82574L Gigabit Network Connection" (counter="Bytes Received/sec" OR counter="Bytes Sent/sec") 
+| bucket _time span=10s 
+| stats avg(Value) as Value by _time, counter 
+| timechart span=10s useother=false avg(Value) by counter
+                    ]]>
+          </query>
+          <earliest>rt-5m</earliest>
+          <latest>rt</latest>
+        </search>
+        <option name="charting.chart">line</option>
+        <option name="charting.chart.style">minimal</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.lineWidth">2</option>
+        <option name="charting.chart.rangeColors">["#3498db","#9b59b6"]</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel span="6" backgroundImage="gradient">
+      <title>
+        <option name="fontSize">12pt</option>DC Current Network Stats</title>
+      <single>
+        <search>
+          <query>
+            <![CDATA[
+index=endpoint host="ADDC" collection="Network Interface" instance="Intel[R] 82574L Gigabit Network Connection"
+| bucket _time span=1m
+| stats avg(Value) as avg_value by counter
+| eval avg_value=round(avg_value,2)
+| eval metric=counter." : ".avg_value
+| table metric
+                    ]]>
+          </query>
+          <earliest>rt-1m</earliest>
+          <latest>rt</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["#65a637","#6db7c6","#f7bc38","#f58f39","#d93f3c"]</option>
+        <option name="useColors">1</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <title>Client Monitoring</title>
+      <html>
+                <h3 style="text-align: center; padding: 10px; background-color: #1e1e1e; border-radius: 5px;">Client Metrics</h3>
+            </html>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <html>
+                <h4 style="padding: 5px;">TARGET-PC Monitoring</h4>
+            </html>
+    </panel>
+  </row>
+  <row>
+    <panel span="6" backgroundImage="gradient">
+      <title>TARGET-PC Login Attempts</title>
+      <chart>
+        <search>
+          <query>
+                      index=endpoint host="TARGET-PC" EventCode=4625
+                      | timechart span=1m count as "Failed Login Attempts"
+                      | where 'Failed Login Attempts' &gt; 5
+                  </query>
+          <earliest>rt-1h</earliest>
+          <latest>rt</latest>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.chart.rangeColors">["#e74c3c"]</option>
+      </chart>
+    </panel>
+    <panel span="6" backgroundImage="gradient">
+      <title>TARGET-PC Top Protocols</title>
+      <chart>
+        <search>
+          <query>
+            <![CDATA[
+index="endpoint" host="TARGET-PC" EventCode=5156 
+| rex field=Message "Destination Port:\s+(?P<DestPort>[^\r\n]+)" 
+| eval Protocol=case(
+    DestPort="80", "HTTP",
+    DestPort="443", "HTTPS",
+    DestPort="53", "DNS",
+    DestPort="389", "LDAP",
+    DestPort="3389", "RDP",
+    DestPort="445", "SMB",
+    DestPort="88", "Kerberos",
+    1=1, "Other"
+)
+| stats count by Protocol
+                    ]]>
+          </query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="charting.chart.rangeColors">["#1abc9c","#2ecc71","#3498db","#9b59b6","#34495e","#f1c40f","#e67e22","#e74c3c"]</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel span="6" backgroundImage="gradient">
+      <title>TARGET-PC Top Source IP Addresses</title>
+      <chart>
+        <search>
+          <query>
+            <![CDATA[
+index="endpoint" host="TARGET-PC" EventCode=5156
+| rex field=Message "Source Address:\s+(?P<SourceAddress>[^\r\n]+)"
+| top limit=10 SourceAddress
+| eval percent=round(percent,2)
+                    ]]>
+          </query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.axisTitleY.text">Connection Count</option>
+        <option name="charting.axisTitleX.text">Source IP</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="charting.chart.rangeColors">["#1abc9c","#16a085"]</option>
+      </chart>
+    </panel>
+    <panel span="6" backgroundImage="gradient">
+      <title>TARGET-PC Network Status</title>
+      <single>
+        <search>
+          <query>
+            <![CDATA[
+index=endpoint host="TARGET-PC"
+| stats count as event_count
+| eval status=if(event_count > 0, "Active", "Inactive")
+| table status
+                    ]]>
+          </query>
+          <earliest>rt-1m</earliest>
+          <latest>rt</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["#d93f3c","#65a637"]</option>
+        <option name="useColors">1</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="refresh.time">30</option>
+      </single>
+    </panel>
+  </row>
+  <row>
+    <panel>
+      <html>
+                <h4 style="padding: 5px;">TARGET-PC-2 Monitoring</h4>
+            </html>
+    </panel>
+  </row>
+  <row>
+    <panel span="6" backgroundImage="gradient">
+      <title>TARGET-PC-2 Login Attempts</title>
+      <chart>
+        <search>
+          <query>
+                      index="endpoint" host="TARGET-PC-2" EventCode=4625
+                      | timechart span=1m count as "Failed Login Attempts"
+                      | where 'Failed Login Attempts' &gt; 5
+                  </query>
+          <earliest>rt-1h</earliest>
+          <latest>rt</latest>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.legend.placement">bottom</option>
+        <option name="charting.chart.rangeColors">["#e74c3c"]</option>
+      </chart>
+    </panel>
+    <panel span="6" backgroundImage="gradient">
+      <title>TARGET-PC-2 Top Protocols</title>
+      <chart>
+        <search>
+          <query>
+            <![CDATA[
+index="endpoint" host="TARGET-PC-2" EventCode=5156 
+| rex field=Message "Destination Port:\s+(?P<DestPort>[^\r\n]+)" 
+| eval Protocol=case(
+    DestPort="80", "HTTP",
+    DestPort="443", "HTTPS",
+    DestPort="53", "DNS",
+    DestPort="389", "LDAP",
+    DestPort="3389", "RDP",
+    DestPort="445", "SMB",
+    DestPort="88", "Kerberos",
+    1=1, "Other"
+)
+| stats count by Protocol
+                    ]]>
+          </query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">pie</option>
+        <option name="charting.legend.placement">right</option>
+        <option name="charting.chart.rangeColors">["#1abc9c","#2ecc71","#3498db","#9b59b6","#34495e","#f1c40f","#e67e22","#e74c3c"]</option>
+      </chart>
+    </panel>
+  </row>
+  <row>
+    <panel span="6" backgroundImage="gradient">
+      <title>
+        <option name="fontSize">12pt</option>TARGET-PC-2 Top Source IP Addresses</title>
+      <chart>
+        <search>
+          <query>
+            <![CDATA[
+index="endpoint" host="TARGET-PC-2" EventCode=5156
+| rex field=Message "Source Address:\s+(?P<SourceAddress>[^\r\n]+)"
+| top limit=10 SourceAddress
+| eval percent=round(percent,2)
+                    ]]>
+          </query>
+          <earliest>-24h@h</earliest>
+          <latest>now</latest>
+        </search>
+        <option name="charting.chart">column</option>
+        <option name="charting.chart.style">shiny</option>
+        <option name="charting.axisTitleY.text">Connection Count</option>
+        <option name="charting.axisTitleX.text">Source IP</option>
+        <option name="charting.legend.placement">none</option>
+        <option name="charting.chart.rangeColors">["#1abc9c","#16a085"]</option>
+      </chart>
+    </panel>
+    <panel span="6" backgroundImage="gradient">
+      <title>TARGET-PC-2 Network Status</title>
+      <single>
+        <search>
+          <query>
+            <![CDATA[
+index=endpoint host="TARGET-PC-2"
+| stats count as event_count
+| eval status=if(event_count > 0, "Active", "Inactive")
+| table status
+                    ]]>
+          </query>
+          <earliest>rt-1m</earliest>
+          <latest>rt</latest>
+        </search>
+        <option name="drilldown">none</option>
+        <option name="colorBy">value</option>
+        <option name="colorMode">block</option>
+        <option name="rangeColors">["#d93f3c","#65a637"]</option>
+        <option name="useColors">1</option>
+        <option name="refresh.display">progressbar</option>
+        <option name="refresh.time">30</option>
+      </single>
+    </panel>
+  </row>
+</dashboard>

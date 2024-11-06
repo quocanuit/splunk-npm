@@ -1,0 +1,1 @@
+.\Sysmon64.exe -i ..\sysmonconfig.xml
